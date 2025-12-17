@@ -43,6 +43,6 @@ class Create extends Component
 
     public function render()
     {
-        return view('livewire.env-files.create');
+        return view('livewire.env-files.create')->layout('layouts.app');
     }
 }

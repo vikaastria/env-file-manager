@@ -60,6 +60,6 @@ class Index extends Component
 
         return view('livewire.env-files.index', [
             'envFiles' => $query->paginate(10),
-        ]);
+        ])->layout('layouts.app');
     }
 }

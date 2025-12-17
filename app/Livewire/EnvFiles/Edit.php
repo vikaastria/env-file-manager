@@ -54,6 +54,6 @@ class Edit extends Component
 
     public function render()
     {
-        return view('livewire.env-files.edit');
+        return view('livewire.env-files.edit')->layout('layouts.app');
     }
 }
