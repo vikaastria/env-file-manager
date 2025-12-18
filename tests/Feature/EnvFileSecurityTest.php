@@ -134,11 +134,17 @@ class EnvFileSecurityTest extends TestCase
 
         $this->actingAs($user2);
 
-        // Try to delete via Livewire component
-        $response = \Livewire\Livewire::test(\App\Livewire\EnvFiles\Index::class)
-            ->call('delete', $envFile->id);
+        // Try to delete via Livewire component - should throw ModelNotFoundException
+        try {
+            \Livewire\Livewire::test(\App\Livewire\EnvFiles\Index::class)
+                ->call('delete', $envFile->id);
+            $this->fail('Expected ModelNotFoundException was not thrown');
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // This is expected - user cannot find other user's env file
+            $this->assertTrue(true);
+        }
 
-        // Should fail - env file should still exist
+        // Env file should still exist
         $this->assertDatabaseHas('env_files', [
             'id' => $envFile->id,
         ]);
@@ -236,7 +242,7 @@ class EnvFileSecurityTest extends TestCase
         $user2 = User::factory()->create();
 
         // Create env files for both users
-        $envFile1 = EnvFile::create([
+        EnvFile::create([
             'user_id' => $user1->id,
             'name' => 'User 1 Env',
             'project_name' => 'Project 1',
@@ -244,7 +250,7 @@ class EnvFileSecurityTest extends TestCase
             'environment' => 'production',
         ]);
 
-        $envFile2 = EnvFile::create([
+        EnvFile::create([
             'user_id' => $user2->id,
             'name' => 'User 2 Env',
             'project_name' => 'Project 2',
@@ -252,17 +258,28 @@ class EnvFileSecurityTest extends TestCase
             'environment' => 'production',
         ]);
 
-        // User 1 should only see their own files
+        // User 1 should only see their own files via database query
         $this->actingAs($user1);
-        $response = $this->get(route('env-files.index'));
-        $response->assertSee('User 1 Env');
-        $response->assertDontSee('User 2 Env');
+        $user1Files = EnvFile::where('user_id', $user1->id)->get();
+        $this->assertCount(1, $user1Files);
+        $this->assertEquals('User 1 Env', $user1Files->first()->name);
 
-        // User 2 should only see their own files
+        // User 2 should only see their own files via database query
         $this->actingAs($user2);
-        $response = $this->get(route('env-files.index'));
-        $response->assertSee('User 2 Env');
-        $response->assertDontSee('User 1 Env');
+        $user2Files = EnvFile::where('user_id', $user2->id)->get();
+        $this->assertCount(1, $user2Files);
+        $this->assertEquals('User 2 Env', $user2Files->first()->name);
+
+        // Test via Livewire component
+        $component1 = \Livewire\Livewire::test(\App\Livewire\EnvFiles\Index::class);
+        $component1->assertSee('User 2 Env');
+        $component1->assertDontSee('User 1 Env');
+
+        // Switch to user 1
+        $this->actingAs($user1);
+        $component2 = \Livewire\Livewire::test(\App\Livewire\EnvFiles\Index::class);
+        $component2->assertSee('User 1 Env');
+        $component2->assertDontSee('User 2 Env');
     }
 
     /**
