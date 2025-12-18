@@ -32,7 +32,8 @@ class Index extends Component
 
     public function delete($id)
     {
-        $envFile = EnvFile::findOrFail($id);
+        // Only find from the authenticated user's files to prevent information disclosure
+        $envFile = auth()->user()->envFiles()->findOrFail($id);
         
         $this->authorize('delete', $envFile);
         

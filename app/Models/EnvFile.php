@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Contracts\Encryption\DecryptException;
 
 class EnvFile extends Model
 {
@@ -43,6 +44,18 @@ class EnvFile extends Model
      */
     public function getContentAttribute($value): string
     {
-        return Crypt::decryptString($value);
+        try {
+            return Crypt::decryptString($value);
+        } catch (DecryptException $e) {
+            // Log the error for debugging
+            \Log::error('Failed to decrypt env file content', [
+                'env_file_id' => $this->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            // Return empty string to prevent application crash
+            // In production, you might want to handle this differently
+            return '';
+        }
     }
 }

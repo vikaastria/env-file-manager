@@ -36,6 +36,58 @@ This application implements multiple layers of security to protect sensitive env
 - Cascade deletes prevent orphaned records
 - User IDs are indexed for performance
 
+### 7. Error Handling
+- Encryption/decryption failures are gracefully handled
+- Errors are logged for debugging without exposing sensitive data
+- Application continues to function even if decryption fails
+
+## Security Testing
+
+The application includes a comprehensive test suite to ensure security:
+
+### Test Coverage
+- **Encryption/Decryption Security** (13 tests)
+  - Verifies content is encrypted at rest in database
+  - Confirms decryption works correctly when accessed
+  - Tests special characters and unicode preservation
+  
+- **Authorization Policies** (12 tests)
+  - Ensures users can only access their own files
+  - Verifies all CRUD operations respect ownership
+  - Tests unauthorized access is blocked
+  
+- **Component Security** (14 tests)
+  - XSS protection through proper escaping
+  - SQL injection prevention in search
+  - Input validation for all fields
+  - CSRF protection on forms
+  
+- **Model Behavior** (10 tests)
+  - Cascade delete on user removal
+  - Content re-encryption on updates
+  - Relationship integrity
+
+### Running Security Tests
+```bash
+# Run all security tests
+php artisan test --filter=EnvFile
+
+# Run specific test suites
+php artisan test --filter=EnvFileSecurity
+php artisan test --filter=EnvFilePolicy
+php artisan test --filter=EnvFileComponent
+php artisan test --filter=EnvFileModel
+```
+
+### Security Audit
+```bash
+# Check for dependency vulnerabilities
+composer audit
+
+# Keep dependencies updated
+composer update
+```
+
 ## Best Practices for Deployment
 
 ### 1. Protect Your APP_KEY
